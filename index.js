@@ -4,15 +4,27 @@ const bodyParser = require("body-parser");
 const cors = require("cors");
 const app = express();
 
-const db = require("./db");
+const db = require("./src/db");
+
+//config
+var nconf = require("nconf");
+nconf.argv().env();
+nconf.file({ file: "config.json" });
+nconf.defaults({
+	file_size_limit: 10 * 1024 * 1024,
+});
 
 app.use(cors());
 app.use(express.json());
 
-const UserApi = require("./routes/UserApi");
+global.__basedir = __dirname;
+const initRoutes = require("./src/routes/FileApi");
+initRoutes(app);
+
+const UserApi = require("./src/routes/UserApi");
 app.use("/UserApi", UserApi);
 
-const PostApi = require("./routes/PostApi");
+const PostApi = require("./src/routes/PostApi");
 app.use("/PostApi", PostApi);
 
 app.use(verifyToken);

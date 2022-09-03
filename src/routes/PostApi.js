@@ -2,6 +2,31 @@ const express = require("express");
 const jwt = require("jsonwebtoken");
 const router = express.Router();
 
+function mysql_real_escape_string(str) {
+	return str.replace(/[\0\x08\x09\x1a\n\r"'\\\%]/g, function (char) {
+		switch (char) {
+			case "\0":
+				return "\\0";
+			case "\x08":
+				return "\\b";
+			case "\x09":
+				return "\\t";
+			case "\x1a":
+				return "\\z";
+			case "\n":
+				return "\\n";
+			case "\r":
+				return "\\r";
+			case '"':
+			case "'":
+			case "\\":
+			case "%":
+				return "\\" + char; // prepends a backslash to backslash, percent,
+			// and double/single quotes
+		}
+	});
+}
+
 var db = require("../db");
 
 router.get("/", (req, res) => {
@@ -30,7 +55,9 @@ function verifyToken(req, res, next) {
 }
 router.post("/createPost", verifyToken, (req, res) => {
 	data = req.body;
-	today = sql = `INSERT INTO posts(title, text, CreateDate, userID, Priority, centerID) values ("${data.TitleInput}","${data.TextInput}",NOW(),"1","${data.PriorityInput}","${data.CenterInput}")`;
+	console.log("haloooooooooooooooooooooo");
+	console.log(data);
+	today = sql = `INSERT INTO posts(title, text, date, userID, priority, centerID) values ("${data.TitleInput}","${mysql_real_escape_string(data.TextInput)}",NOW(),"1","${data.PriorityInput}","${data.CenterInput}")`;
 	db.query(sql, (err, result) => {
 		if (err) {
 			console.log("/createPost error:" + err);

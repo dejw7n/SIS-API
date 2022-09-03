@@ -124,7 +124,7 @@ router.post("/verifyUser", (req, ress) => {
 							} else {
 								let resultArray = Object.values(JSON.parse(JSON.stringify(res)));
 								let payload = { subject: resultArray[0].userID };
-								let token = jwt.sign(payload, "secretKey", { expiresIn: 60 * 60 });
+								let token = jwt.sign(payload, "secretKey", { expiresIn: "365d" });
 								let data = {
 									token: token,
 									userData: resultArray,
