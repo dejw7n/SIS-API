@@ -1,3 +1,4 @@
 {
-    "file_size_limit" : 104857600
+    "file_size_limit" : 104857600,
+    "file_base_dir": "/resources/static/assets/uploads/"
 }
