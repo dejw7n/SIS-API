@@ -2,6 +2,10 @@ const uploadFile = require("../middleware/upload");
 const fs = require("fs");
 const baseUrl = "http://localhost:8080/files/";
 var nconf = require("nconf");
+var mime = require("mime-types");
+var path = require("path");
+
+var db = require("../db");
 
 const getFileSizeLimit = (req, res) => {
 	res.status(200).send({
@@ -16,13 +20,19 @@ const upload = async (req, res) => {
 		if (req.file == undefined) {
 			return res.status(400).send({ message: "Please upload a file!" });
 		}
-
-		res.status(200).send({});
+		if (req.body.defer_uuid != "null") {
+			deferFileInDb(req.body.defer_uuid, global.lastUsedUuid);
+		}
+		writeFileToDb(req.file, global.lastUsedUuid);
+		res.status(200).send({
+			success: true,
+		});
 	} catch (err) {
 		console.log(err);
 
 		if (err.code == "LIMIT_FILE_SIZE") {
 			return res.status(500).send({
+				success: false,
 				message: "File size cannot be larger than " + nconf.get("file_size_limit") + " byte!",
 			});
 		}
@@ -32,6 +42,26 @@ const upload = async (req, res) => {
 		});
 	}
 };
+
+function deferFileInDb(deferUuid, fileUuid) {
+	sql = `INSERT INTO files_deferred(defer_uuid, file_uuid) values ("${deferUuid}","${fileUuid}")`;
+	db.query(sql, (err, result) => {
+		if (err) {
+			console.log("/deferFileToDb error:" + err);
+		}
+	});
+}
+
+function writeFileToDb(file, uuid) {
+	let fileExtension = path.extname(file.originalname);
+	let fileType = mime.lookup(file.originalname);
+	sql = `INSERT INTO files(uuid, name, type, size) values ("${uuid}","${db.escape(file.originalname)}","${fileType}","${file.size}")`;
+	db.query(sql, (err, result) => {
+		if (err) {
+			console.log("/writeFileToDb error:" + err);
+		}
+	});
+}
 
 const getListFiles = (req, res) => {
 	const directoryPath = __basedir + "/resources/static/assets/uploads/";

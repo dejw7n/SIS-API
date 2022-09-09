@@ -1,31 +1,7 @@
+const { randomUUID } = require("crypto");
 const express = require("express");
 const jwt = require("jsonwebtoken");
 const router = express.Router();
-
-function mysql_real_escape_string(str) {
-	return str.replace(/[\0\x08\x09\x1a\n\r"'\\\%]/g, function (char) {
-		switch (char) {
-			case "\0":
-				return "\\0";
-			case "\x08":
-				return "\\b";
-			case "\x09":
-				return "\\t";
-			case "\x1a":
-				return "\\z";
-			case "\n":
-				return "\\n";
-			case "\r":
-				return "\\r";
-			case '"':
-			case "'":
-			case "\\":
-			case "%":
-				return "\\" + char; // prepends a backslash to backslash, percent,
-			// and double/single quotes
-		}
-	});
-}
 
 var db = require("../db");
 
@@ -54,13 +30,50 @@ function verifyToken(req, res, next) {
 	});
 }
 router.post("/createPost", verifyToken, (req, res) => {
-	data = req.body;
-	console.log("haloooooooooooooooooooooo");
-	console.log(data);
-	today = sql = `INSERT INTO posts(title, text, date, userID, priority, centerID) values ("${data.TitleInput}","${mysql_real_escape_string(data.TextInput)}",NOW(),"1","${data.PriorityInput}","${data.CenterInput}")`;
+	let data = req.body;
+	let postUuid = randomUUID();
+	sql = `INSERT INTO posts(uuid, title, text, date, user_id, priority, center_id) values ("${postUuid}","${data.TitleInput}","${db.escape(data.TextInput)}",NOW(),"1","${data.PriorityInput}","${data.CenterInput}")`;
 	db.query(sql, (err, result) => {
 		if (err) {
 			console.log("/createPost error:" + err);
+		}
+	});
+	if (data.FilesDefer != "null") {
+		try {
+			let filesDeferJson = JSON.parse(data.FilesDefer);
+			for (var attributename in filesDeferJson) {
+				sqlSelect = `SELECT file_uuid FROM files_deferred WHERE defer_uuid = "${filesDeferJson[attributename]}"`;
+				let sqlResult = null;
+				db.query(sqlSelect, (err, result) => {
+					if (err) {
+						console.log("/getrAllPosts error:" + err);
+					}
+					sqlResult = JSON.parse(JSON.stringify(result));
+					sqlResult = sqlResult[0];
+
+					sqlInsert = `INSERT INTO posts_files_mapping(post_uuid, file_uuid) values ("${postUuid}","${sqlResult["file_uuid"]}")`;
+					db.query(sqlInsert, (err, result) => {
+						if (err) {
+							console.log("/postsFilesMapping error:" + err);
+						}
+					});
+					sqlDelete = `DELETE FROM files_deferred WHERE defer_uuid="${filesDeferJson[attributename]}"`;
+					db.query(sqlDelete, (err, result) => {
+						if (err) {
+							console.log("/deleteFilesDeferred error:" + err);
+						}
+					});
+				});
+			}
+		} catch (error) {}
+	}
+});
+router.post("/deletePost", verifyToken, (req, res) => {
+	data = req.body;
+	sql = `DELETE posts FROM posts WHERE id=${data.id};`;
+	db.query(sql, (err, result) => {
+		if (err) {
+			console.log("/deletePost error:" + err);
 		}
 	});
 });
