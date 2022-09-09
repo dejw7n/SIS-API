@@ -51,11 +51,11 @@ router.post("/verifyToken", (req, res) => {
 router.post("/getUser", verifyToken, (req, res) => {
 	const user = req.body;
 
-	const sqlSelect = `SELECT userID, name, lname, phone, email, r.roleID, r.role, c.centerID, c.name as centerName
+	const sqlSelect = `SELECT id, name, lname, phone, email, r.roleID, r.role, c.center_id, c.name as centerName
                      FROM users
-                            JOIN role r on users.roleID = r.roleID
-                            JOIN center c on c.centerID = users.centerID
-                     WHERE userID = ${user.id}`;
+                            JOIN role r on users.role_id = r.role_id
+                            JOIN center c on c.center_id = users.center_id
+                     WHERE id = ${user.id}`;
 	db.query(sqlSelect, (err, result) => {
 		if (err) {
 			console.log("/getUser error:" + err);
@@ -68,10 +68,10 @@ router.post("/getMyData", verifyToken, (req, res) => {
 	try {
 		let payload = jwt.verify(token, "secretKey");
 		userId = payload.subject;
-		const sqlSelect = `SELECT userID, name, lname, r.roleID, r.role
+		const sqlSelect = `SELECT id, name, lname, r.role_id, r.role
                        FROM users
-                              JOIN role r on users.roleID = r.roleID
-                       WHERE userID = ${userId}`;
+                              JOIN role r on users.role_id = r.role_id
+                       WHERE id = ${userId}`;
 		db.query(sqlSelect, (err, result) => {
 			if (err) {
 				console.log("/getMyData error" + err);
@@ -82,10 +82,10 @@ router.post("/getMyData", verifyToken, (req, res) => {
 });
 
 router.post("/getAllUsers", verifyToken, (req, res) => {
-	const sqlSelect = `SELECT userID, users.name, lname, phone, email, r.roleID, r.role, c.centerID, c.name as centerName
+	const sqlSelect = `SELECT id, users.name, lname, phone, email, r.role_id, r.role, c.center_id, c.name as centerName
                      FROM users
-                            JOIN role r on users.roleID = r.roleID
-                            JOIN center c on c.centerID = users.centerID
+                            JOIN role r on users.role_id = r.role_id
+                            JOIN center c on c.center_id = users.center_id
                      ORDER BY lname`;
 	db.query(sqlSelect, (err, result) => {
 		if (err) {
@@ -98,8 +98,7 @@ router.post("/getAllUsers", verifyToken, (req, res) => {
 router.post("/verifyUser", (req, ress) => {
 	const user = req.body;
 	if (user.email && user.pass) {
-		console.log("user:" + user.email);
-		sql = `SELECT userID, password, salt FROM users where email = "${user.email}"`;
+		sql = `SELECT id, password, salt FROM users where email = "${user.email}"`;
 		db.query(sql, (err, res) => {
 			if (err) {
 				console.log("/verifyUser error:" + err);
@@ -114,16 +113,16 @@ router.post("/verifyUser", (req, ress) => {
 					//if (hash == resultArray[0].password) {
 					//FIXME: temporary solution without hashing
 					if (pass == resultArray[0].password) {
-						const sqlSelect = `SELECT userID, name, lname, r.roleID, r.role
+						const sqlSelect = `SELECT id, name, lname, r.role_id, r.role
                                FROM users
-                                      JOIN role r on users.roleID = r.roleID
-                               WHERE userID = ${resultArray[0].userID}`;
+                                      JOIN role r on users.role_id = r.role_id
+                               WHERE id = ${resultArray[0].id}`;
 						db.query(sqlSelect, (err, res) => {
 							if (err) {
 								console.log("/verifyUser error:" + err);
 							} else {
 								let resultArray = Object.values(JSON.parse(JSON.stringify(res)));
-								let payload = { subject: resultArray[0].userID };
+								let payload = { subject: resultArray[0].id };
 								let token = jwt.sign(payload, "secretKey", { expiresIn: "365d" });
 								let data = {
 									token: token,
