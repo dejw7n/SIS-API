@@ -3,16 +3,9 @@ const jwt = require("jsonwebtoken");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const app = express();
+const FileController = require("./src/controller/file.controller.js");
 
 const db = require("./src/db");
-
-//config
-var nconf = require("nconf");
-nconf.argv().env();
-nconf.file({ file: "config.json" });
-nconf.defaults({
-	file_size_limit: 10 * 1024 * 1024,
-});
 
 app.use(cors());
 app.use(express.json());
@@ -49,8 +42,10 @@ function verifyToken(req, res, next) {
 }
 
 var listener = app.listen(30006, () => {
+	console.log("Cleaning up deferred files...");
+	FileController.cleanUpDeferredFiles();
 	console.log("Listening on port " + listener.address().port);
-	db.getConnection(function (err, connection) {
+	db.pool.getConnection(function (err, connection) {
 		if (err === undefined) {
 			console.log("An error occurred while connecting to the database!");
 		} else {
