@@ -81,18 +81,14 @@ router.post("/getMyData", verifyToken, (req, res) => {
 	} catch (err) {}
 });
 
-router.post("/getAllUsers", verifyToken, (req, res) => {
-	const sqlSelect = `SELECT id, users.name, lname, phone, email, r.role_id, r.role, c.center_id, c.name as centerName
-                     FROM users
-                            JOIN role r on users.role_id = r.role_id
-                            JOIN center c on c.center_id = users.center_id
-                     ORDER BY lname`;
-	db.query(sqlSelect, (err, result) => {
-		if (err) {
-			console.log("/getAllUsers error:" + err);
-		}
-		res.status(200).send(result);
-	});
+router.post("/getAllUsers", verifyToken, async (req, res) => {
+	const sqlSelect = `SELECT users.name, lname, phone, email, r.id, r.role, c.id, c.name as centerName
+    FROM users
+    JOIN role r on users.role_id = r.id
+    JOIN center c on c.id = users.center_id
+    ORDER BY lname`;
+	let response = await db.asyncQuery(sqlSelect, null);
+	res.status(200).send(response);
 });
 
 router.post("/verifyUser", (req, ress) => {
