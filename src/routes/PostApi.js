@@ -1,9 +1,9 @@
-const { randomUUID } = require("crypto");
 const express = require("express");
 const jwt = require("jsonwebtoken");
 const router = express.Router();
 
 var db = require("../db");
+const FileController = require("../controller/file.controller");
 
 router.get("/", (req, res) => {
 	res.status(204).send("please specifies function");
@@ -29,82 +29,69 @@ function verifyToken(req, res, next) {
 		}
 	});
 }
-router.post("/createPost", verifyToken, (req, res) => {
-	let data = req.body;
-	let postUuid = randomUUID();
-	sql = `INSERT INTO posts(uuid, title, text, date, user_id, priority, center_id) values ("${postUuid}","${data.TitleInput}","${db.escape(data.TextInput)}",NOW(),"1","${data.PriorityInput}","${data.CenterInput}")`;
-	db.query(sql, (err, result) => {
+function deleteDeferFile(deferUuid) {
+	sqlDelete = `DELETE FROM files_deferred WHERE defer_uuid=${db.pool.escape(deferUuid)}`;
+	db.pool.query(sqlDelete, (err, result) => {
 		if (err) {
-			console.log("/createPost error:" + err);
+			console.log("/deleteFilesDeferred error:" + err);
 		}
 	});
+}
+router.post("/createPost", verifyToken, async (req, res) => {
+	let data = req.body;
+	sql = `INSERT INTO posts(title, text, date, user_id, priority, center_id) values (${db.pool.escape(data.TitleInput)},${db.pool.escape(data.TextInput)},NOW(),"1",${db.pool.escape(data.PriorityInput)},${db.pool.escape(data.CenterInput)})`;
+	let response = await db.asyncQuery(sql, null);
+	let postId = response.insertId;
 	if (data.FilesDefer != "null") {
 		try {
 			let filesDeferJson = JSON.parse(data.FilesDefer);
 			for (var attributename in filesDeferJson) {
-				sqlSelect = `SELECT file_uuid FROM files_deferred WHERE defer_uuid = "${filesDeferJson[attributename]}"`;
+				sqlSelect = `SELECT * FROM files_deferred WHERE defer_uuid = ${db.pool.escape(filesDeferJson[attributename])}`;
 				let sqlResult = null;
-				db.query(sqlSelect, (err, result) => {
+				db.pool.query(sqlSelect, (err, result) => {
 					if (err) {
 						console.log("/getrAllPosts error:" + err);
 					}
 					sqlResult = JSON.parse(JSON.stringify(result));
 					sqlResult = sqlResult[0];
 
-					sqlInsert = `INSERT INTO posts_files_mapping(post_uuid, file_uuid) values ("${postUuid}","${sqlResult["file_uuid"]}")`;
-					db.query(sqlInsert, (err, result) => {
+					sqlInsert = `INSERT INTO posts_files_mapping(post_id, file_id) values (${db.pool.escape(postId)},${db.pool.escape(sqlResult["file_id"])})`;
+					db.pool.query(sqlInsert, (err, result) => {
 						if (err) {
 							console.log("/postsFilesMapping error:" + err);
 						}
 					});
-					sqlDelete = `DELETE FROM files_deferred WHERE defer_uuid="${filesDeferJson[attributename]}"`;
-					db.query(sqlDelete, (err, result) => {
-						if (err) {
-							console.log("/deleteFilesDeferred error:" + err);
-						}
-					});
+					deleteDeferFile(sqlResult["defer_uuid"]);
 				});
 			}
 		} catch (error) {}
 	}
 });
-router.post("/deletePost", verifyToken, (req, res) => {
-	data = req.body;
-	sql = `DELETE posts FROM posts WHERE id=${data.id};`;
-	db.query(sql, (err, result) => {
-		if (err) {
-			console.log("/deletePost error:" + err);
-		}
+router.post("/deletePost", verifyToken, async (req, res) => {
+	let data = req.body;
+	let response = await db.asyncQuery(`SELECT file_id, files.uuid FROM posts_files_mapping JOIN files ON files.id = posts_files_mapping.file_id WHERE post_id=${db.pool.escape(data.postId)}`, null);
+	await db.asyncQuery(`DELETE FROM posts_files_mapping WHERE post_id=${db.pool.escape(data.postId)}`, null);
+	response.forEach((element) => {
+		FileController.removeFile(element.uuid);
+	});
+	db.asyncQuery(`DELETE posts FROM posts WHERE id=${db.pool.escape(data.postId)}`, null);
+	res.status(200).send({
+		success: true,
 	});
 });
-router.post("/getAllPosts", verifyToken, (req, res) => {
-	//FIXME: CreateDate, LastEditUser not found in db
-	//const sqlSelect = "SELECT postID, title,text, CreateDate, u.userID as userID, p.id as PriorityID,c.centerID as CenterID, c.name as Center, p.priority as Priority, u.name as UserName, u.lname as UserLname, LastEditDate, u2.userID as LastEditUser from posts join center c on c.centerID = posts.centerID join priority p on p.id = posts.Priority join users u on u.userID = posts.userID left join users u2 on u2.userID = posts.LastEditUser";
-	const sqlSelect = "select * from posts";
-	db.query(sqlSelect, (err, result) => {
-		if (err) {
-			console.log("/getrAllPosts error:" + err);
-		}
-		res.send(result);
-	});
+router.get("/getAllPosts", verifyToken, async (req, res) => {
+	let response = await db.asyncQuery(`SELECT * FROM posts`, null);
+	res.send(response);
 });
-router.post("/getPriorities", (req, res) => {
-	const sqlSelect = "SELECT * FROM priority";
-	db.query(sqlSelect, (err, result) => {
-		if (err) {
-			console.log("/getPriorities error:" + err);
-		}
-		res.send(result);
-	});
+router.post("/getCenters", async (req, res) => {
+	let response = await db.asyncQuery(`SELECT * FROM center`, null);
+	const result = Object.values(JSON.parse(JSON.stringify(response)));
+	res.send(result);
 });
-router.post("/getCenters", (req, res) => {
-	const sqlSelect = "SELECT * FROM center";
-	db.query(sqlSelect, (err, result) => {
-		if (err) {
-			console.log("/getCenters error:" + err);
-		}
-		res.send(result);
-	});
+router.post("/getPriorities", async (req, res) => {
+	let response = await db.asyncQuery(`SELECT * FROM priority`, null);
+	const result = Object.values(JSON.parse(JSON.stringify(response)));
+	res.send(result);
 });
 
 module.exports = router;
