@@ -1,32 +1,35 @@
 const uploadFile = require("../middleware/upload");
 const fs = require("fs");
-const baseUrl = "http://localhost:8080/files/";
-var nconf = require("nconf");
 var mime = require("mime-types");
 var path = require("path");
-
+var config = require("../middleware/config");
 var db = require("../db");
 
 const getFileSizeLimit = (req, res) => {
 	res.status(200).send({
-		message: nconf.get("file_size_limit"),
+		message: config.get("file_size_limit"),
 	});
 };
 
+const directoryPath = config.get("file_base_dir");
+
+global.numberFilesUploaded = 0;
+global.selectedFilesUuid = [];
 const upload = async (req, res) => {
 	try {
 		await uploadFile(req, res);
-
-		if (req.file == undefined) {
-			return res.status(400).send({ message: "Please upload a file!" });
-		}
-		if (req.body.defer_uuid != "null") {
-			deferFileInDb(req.body.defer_uuid, global.lastUsedUuid);
-		}
-		writeFileToDb(req.file, global.lastUsedUuid);
 		res.status(200).send({
 			success: true,
 		});
+		if (req.file == undefined) {
+			return res.status(400).send({ message: "Please upload a file!" });
+		}
+		processUploadedFile(req.file, global.selectedFilesUuid[global.numberFilesUploaded], req.body.deferUuid);
+		if (req.body.fileAmount == global.numberFilesUploaded) {
+			global.numberFilesUploaded = 0;
+			global.selectedFilesUuid = [];
+		}
+		global.numberFilesUploaded++;
 	} catch (err) {
 		console.log(err);
 
@@ -43,29 +46,50 @@ const upload = async (req, res) => {
 	}
 };
 
-function deferFileInDb(deferUuid, fileUuid) {
-	sql = `INSERT INTO files_deferred(defer_uuid, file_uuid) values ("${deferUuid}","${fileUuid}")`;
-	db.query(sql, (err, result) => {
-		if (err) {
-			console.log("/deferFileToDb error:" + err);
-		}
-	});
+async function processUploadedFile(file, fileUuid, deferUuid) {
+	let fileId = await saveFileToDb(file, fileUuid);
+	if (deferUuid != "null") {
+		deferFileInDb(deferUuid, fileId);
+	}
 }
 
-function writeFileToDb(file, uuid) {
+async function saveFileToDb(file, uuid) {
 	let fileExtension = path.extname(file.originalname);
 	let fileType = mime.lookup(file.originalname);
-	sql = `INSERT INTO files(uuid, name, type, size) values ("${uuid}","${db.escape(file.originalname)}","${fileType}","${file.size}")`;
-	db.query(sql, (err, result) => {
+	let response = await db.asyncQuery(`INSERT INTO files SET ?`, { uuid: uuid, name: file.originalname, type: fileType, size: file.size });
+	return response.insertId;
+}
+
+function deferFileInDb(deferUuid, fileId) {
+	sql = `INSERT INTO files_deferred(defer_uuid, file_id) values (${db.pool.escape(deferUuid)},${db.pool.escape(fileId)})`;
+	db.asyncQuery(sql, null);
+}
+
+async function cleanUpDeferredFiles() {
+	let response = await db.asyncQuery(`SELECT files.id, files.uuid FROM files_deferred INNER JOIN files ON files.id=files_deferred.file_id`);
+	response = JSON.parse(JSON.stringify(response));
+	response.forEach(async (element) => {
+		let dir = __basedir + nconf.get("file_base_dir") + "/" + element.uuid;
+		fs.rm(dir, { recursive: true, force: true }, (err) => {
+			if (err) {
+				throw err;
+			}
+		});
+		let response = await db.asyncQuery(`DELETE FROM files_deferred WHERE file_id=${db.pool.escape(element.id)};`, null);
+		db.asyncQuery(`DELETE FROM files WHERE uuid=${db.pool.escape(element.uuid)};`, null);
+	});
+}
+function removeFile(file_uuid) {
+	console.log("call removeFile");
+	db.asyncQuery(`DELETE FROM files WHERE uuid=${db.pool.escape(file_uuid)}`, null);
+	fs.rm(__basedir + directoryPath + file_uuid, { recursive: true, force: true }, (err) => {
 		if (err) {
-			console.log("/writeFileToDb error:" + err);
+			throw err;
 		}
 	});
 }
 
 const getListFiles = (req, res) => {
-	const directoryPath = __basedir + "/resources/static/assets/uploads/";
-
 	fs.readdir(directoryPath, function (err, files) {
 		if (err) {
 			res.status(500).send({
@@ -86,11 +110,12 @@ const getListFiles = (req, res) => {
 	});
 };
 
-const download = (req, res) => {
-	const fileName = req.params.name;
-	const directoryPath = __basedir + "/resources/static/assets/uploads/";
+const download = async (req, res) => {
+	const fileUuid = req.params.fileUuid;
+	let response = await db.asyncQuery(`SELECT * FROM files WHERE uuid = ${db.escape(fileUuid)}`, null);
+	let fileName = response.name;
 
-	res.download(directoryPath + fileName, fileName, (err) => {
+	res.download(directoryPath + fileUuid + "/" + fileName, fileName, (err) => {
 		if (err) {
 			res.status(500).send({
 				message: "Could not download the file. " + err,
@@ -101,7 +126,6 @@ const download = (req, res) => {
 
 const remove = (req, res) => {
 	const fileName = req.params.name;
-	const directoryPath = __basedir + "/resources/static/assets/uploads/";
 
 	fs.unlink(directoryPath + fileName, (err) => {
 		if (err) {
@@ -116,7 +140,6 @@ const remove = (req, res) => {
 
 const removeSync = (req, res) => {
 	const fileName = req.params.name;
-	const directoryPath = __basedir + "/resources/static/assets/uploads/";
 
 	try {
 		fs.unlinkSync(directoryPath + fileName);
@@ -131,8 +154,10 @@ const removeSync = (req, res) => {
 
 module.exports = {
 	upload,
+	removeFile,
 	getListFiles,
 	getFileSizeLimit,
+	cleanUpDeferredFiles,
 	download,
 	remove,
 	removeSync,
