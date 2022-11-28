@@ -56,7 +56,7 @@ router.post("/getUser", verifyToken, (req, res) => {
                             JOIN role r on users.role_id = r.role_id
                             JOIN center c on c.center_id = users.center_id
                      WHERE id = ${user.id}`;
-	db.query(sqlSelect, (err, result) => {
+	db.pool.query(sqlSelect, (err, result) => {
 		if (err) {
 			console.log("/getUser error:" + err);
 		}
@@ -72,7 +72,7 @@ router.post("/getMyData", verifyToken, (req, res) => {
                        FROM users
                               JOIN role r on users.role_id = r.role_id
                        WHERE id = ${userId}`;
-		db.query(sqlSelect, (err, result) => {
+		db.pool.query(sqlSelect, (err, result) => {
 			if (err) {
 				console.log("/getMyData error" + err);
 			}
@@ -94,8 +94,8 @@ router.post("/getAllUsers", verifyToken, async (req, res) => {
 router.post("/verifyUser", (req, ress) => {
 	const user = req.body;
 	if (user.email && user.pass) {
-		sql = `SELECT id, password, salt FROM users where email = "${user.email}"`;
-		db.query(sql, (err, res) => {
+		sql = `SELECT users.id, password, salt FROM users where email = "${user.email}"`;
+		db.pool.query(sql, (err, res) => {
 			if (err) {
 				console.log("/verifyUser error:" + err);
 			} else {
@@ -109,13 +109,13 @@ router.post("/verifyUser", (req, ress) => {
 					//if (hash == resultArray[0].password) {
 					//FIXME: temporary solution without hashing
 					if (pass == resultArray[0].password) {
-						const sqlSelect = `SELECT id, name, lname, r.role_id, r.role
+						const sqlSelect = `SELECT users.id, users.name, users.lname, r.id as role_id, r.role
                                FROM users
-                                      JOIN role r on users.role_id = r.role_id
-                               WHERE id = ${resultArray[0].id}`;
-						db.query(sqlSelect, (err, res) => {
+                                      JOIN role r on users.role_id = r.id
+                               WHERE users.id = ${resultArray[0].id}`;
+						db.pool.query(sqlSelect, (err, res) => {
 							if (err) {
-								console.log("/verifyUser error:" + err);
+								console.log("/verifyUser error2:" + err);
 							} else {
 								let resultArray = Object.values(JSON.parse(JSON.stringify(res)));
 								let payload = { subject: resultArray[0].id };

@@ -4,6 +4,7 @@ var mime = require("mime-types");
 var path = require("path");
 var config = require("../middleware/config");
 var db = require("../db");
+var nconf = require("nconf");
 
 const getFileSizeLimit = (req, res) => {
 	res.status(200).send({
@@ -12,6 +13,7 @@ const getFileSizeLimit = (req, res) => {
 };
 
 const directoryPath = config.get("file_base_dir");
+const baseUrl = config.get("base_url");
 
 global.numberFilesUploaded = 0;
 global.selectedFilesUuid = [];
@@ -28,8 +30,9 @@ const upload = async (req, res) => {
 		if (req.body.fileAmount == global.numberFilesUploaded) {
 			global.numberFilesUploaded = 0;
 			global.selectedFilesUuid = [];
+		} else {
+			global.numberFilesUploaded++;
 		}
-		global.numberFilesUploaded++;
 	} catch (err) {
 		console.log(err);
 
@@ -45,6 +48,15 @@ const upload = async (req, res) => {
 		});
 	}
 };
+const getFileInfoById = async (req, res) => {
+	let respond = await db.asyncQuery(`SELECT * FROM files WHERE id=${db.pool.escape(req.params.id)}`);
+	return res.status(200).send(respond[0]);
+};
+const getFileByDeferUuid = async (req, res) => {
+	let respond = await db.asyncQuery(`SELECT files.id, files.uuid, files.type, files.size, files.upload_date, files.name FROM files_deferred JOIN files ON files.id = files_deferred.file_id WHERE defer_uuid=${db.pool.escape(req.params.deferUuid)}`);
+	let respond2 = db.asyncQuery(`DELETE FROM files_deferred WHERE defer_uuid = ${db.pool.escape(req.params.deferUuid)}`);
+	return res.status(200).send(respond[0]);
+};
 
 async function processUploadedFile(file, fileUuid, deferUuid) {
 	let fileId = await saveFileToDb(file, fileUuid);
@@ -52,6 +64,26 @@ async function processUploadedFile(file, fileUuid, deferUuid) {
 		deferFileInDb(deferUuid, fileId);
 	}
 }
+
+const publicDownload = async (req, res) => {
+	try {
+		const uuid = req.params.uuid;
+		let response = await db.asyncQuery(`SELECT * FROM files WHERE uuid = ${db.pool.escape(uuid)}`, null);
+		response = response[0];
+		let fileUuid = response.uuid;
+		let fileName = response.name;
+
+		res.download("./" + directoryPath + fileUuid + "/" + fileName, fileName, (err) => {
+			if (err) {
+				res.status(500).send({
+					message: "Could not download the file. " + err,
+				});
+			}
+		});
+	} catch (error) {
+		console.log("#CATCH: " + error);
+	}
+};
 
 async function saveFileToDb(file, uuid) {
 	let fileExtension = path.extname(file.originalname);
@@ -80,7 +112,6 @@ async function cleanUpDeferredFiles() {
 	});
 }
 function removeFile(file_uuid) {
-	console.log("call removeFile");
 	db.asyncQuery(`DELETE FROM files WHERE uuid=${db.pool.escape(file_uuid)}`, null);
 	fs.rm(__basedir + directoryPath + file_uuid, { recursive: true, force: true }, (err) => {
 		if (err) {
@@ -90,7 +121,7 @@ function removeFile(file_uuid) {
 }
 
 const getListFiles = (req, res) => {
-	fs.readdir(directoryPath, function (err, files) {
+	fs.readdir("./" + directoryPath, function (err, files) {
 		if (err) {
 			res.status(500).send({
 				message: "Unable to scan files!",
@@ -102,7 +133,7 @@ const getListFiles = (req, res) => {
 		files.forEach((file) => {
 			fileInfos.push({
 				name: file,
-				url: baseUrl + file,
+				url: directoryPath + file,
 			});
 		});
 
@@ -110,18 +141,71 @@ const getListFiles = (req, res) => {
 	});
 };
 
-const download = async (req, res) => {
-	const fileUuid = req.params.fileUuid;
-	let response = await db.asyncQuery(`SELECT * FROM files WHERE uuid = ${db.escape(fileUuid)}`, null);
-	let fileName = response.name;
+const getFiles = async (req, res) => {
+	let fileInfos = [];
 
-	res.download(directoryPath + fileUuid + "/" + fileName, fileName, (err) => {
-		if (err) {
-			res.status(500).send({
-				message: "Could not download the file. " + err,
-			});
-		}
+	let response = await db.asyncQuery("SELECT * FROM files", null);
+	response.forEach((file) => {
+		fileInfos.push({
+			id: file.id,
+			name: file.name,
+			uuid: file.uuid,
+			type: file.type,
+			size: file.size,
+			upload_date: file.upload_date,
+			file_url: baseUrl + file.uuid,
+		});
 	});
+
+	res.status(200).send(fileInfos);
+};
+
+async function getFilesByPostId(postId) {
+	let response = await db.asyncQuery(`SELECT file_id FROM posts_files_mapping WHERE post_id=${db.pool.escape(postId)}`, null);
+	let fileInfos = [];
+	for (let i = 0; i < response.length; i++) {
+		let response2 = await db.asyncQuery(`SELECT * FROM files WHERE id=${response[i].file_id}`);
+		response2 = Object.values(JSON.parse(JSON.stringify(response2)));
+		fileInfos.push(response2[0]);
+	}
+	return fileInfos;
+}
+
+const download = async (req, res) => {
+	try {
+		const fileId = req.params.id;
+		let response = await db.asyncQuery(`SELECT * FROM files WHERE id = ${db.pool.escape(fileId)}`, null);
+		response = response[0];
+		let fileUuid = response.uuid;
+		let fileName = response.name;
+
+		res.download("./" + directoryPath + fileUuid + "/" + fileName, fileName, (err) => {
+			if (err) {
+				res.status(500).send({
+					message: "Could not download the file. " + err,
+				});
+			}
+		});
+	} catch (error) {
+		console.log("#CATCH: " + error);
+	}
+};
+const downloadUrl = async (req, res) => {
+	try {
+		const uuid = req.params.uuid;
+		let response = await db.asyncQuery(`SELECT * FROM files WHERE uuid = ${db.pool.escape(uuid)}`, null);
+		response = response[0];
+		let fileUuid = response.uuid;
+		let fileName = response.name;
+
+		let url = {
+			url: baseUrl + fileUuid,
+		};
+
+		res.status(200).send(url);
+	} catch (error) {
+		console.log("#CATCH: " + error);
+	}
 };
 
 const remove = (req, res) => {
@@ -138,11 +222,13 @@ const remove = (req, res) => {
 	});
 };
 
-const removeSync = (req, res) => {
-	const fileName = req.params.name;
+const deleteFileByUuid = (req, res) => {
+	const uuid = req.params.uuid;
 
 	try {
-		fs.unlinkSync(directoryPath + fileName);
+		fs.rmSync(directoryPath + uuid, { recursive: true, force: true });
+
+		let response = db.asyncQuery("DELETE FROM files WHERE uuid = " + db.pool.escape(uuid), null);
 
 		res.status(200).send({});
 	} catch (err) {
@@ -154,11 +240,17 @@ const removeSync = (req, res) => {
 
 module.exports = {
 	upload,
+	getFileInfoById,
+	getFileByDeferUuid,
 	removeFile,
+	getFiles,
 	getListFiles,
 	getFileSizeLimit,
 	cleanUpDeferredFiles,
+	getFilesByPostId,
 	download,
 	remove,
-	removeSync,
+	deleteFileByUuid,
+	publicDownload,
+	downloadUrl,
 };

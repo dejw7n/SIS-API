@@ -81,7 +81,11 @@ router.post("/deletePost", verifyToken, async (req, res) => {
 });
 router.get("/getAllPosts", verifyToken, async (req, res) => {
 	let response = await db.asyncQuery(`SELECT * FROM posts`, null);
-	res.send(response);
+	let responseArray = Object.values(JSON.parse(JSON.stringify(response)));
+	for (let i = 0; i < responseArray.length; i++) {
+		responseArray[i].files = JSON.stringify(await FileController.getFilesByPostId(responseArray[i].id));
+	}
+	res.send(responseArray);
 });
 router.post("/getCenters", async (req, res) => {
 	let response = await db.asyncQuery(`SELECT * FROM center`, null);
