@@ -67,6 +67,41 @@ router.post("/createPost", verifyToken, async (req, res) => {
 		} catch (error) {}
 	}
 });
+router.post("/editPost", verifyToken, async (req, res) => {
+	let data = req.body;
+	sql = `UPDATE posts SET 
+	title = ${db.pool.escape(data.titleInput)},
+	text = ${db.pool.escape(data.textInput)}, 
+	priority = ${db.pool.escape(data.priorityInput)}, 
+	center_id = ${db.pool.escape(data.centerInput)} 
+	WHERE id = ${data.id}`;
+	let response = await db.asyncQuery(sql, null);
+	let postId = data.id;
+	if (data.FilesDefer != "null") {
+		try {
+			let filesDeferJson = JSON.parse(data.FilesDefer);
+			for (var attributename in filesDeferJson) {
+				sqlSelect = `SELECT * FROM files_deferred WHERE defer_uuid = ${db.pool.escape(filesDeferJson[attributename])}`;
+				let sqlResult = null;
+				db.pool.query(sqlSelect, (err, result) => {
+					if (err) {
+						console.log("/getrAllPosts error:" + err);
+					}
+					sqlResult = JSON.parse(JSON.stringify(result));
+					sqlResult = sqlResult[0];
+
+					sqlInsert = `INSERT INTO posts_files_mapping(post_id, file_id) values (${db.pool.escape(postId)},${db.pool.escape(sqlResult["file_id"])})`;
+					db.pool.query(sqlInsert, (err, result) => {
+						if (err) {
+							console.log("/postsFilesMapping error:" + err);
+						}
+					});
+					deleteDeferFile(sqlResult["defer_uuid"]);
+				});
+			}
+		} catch (error) {}
+	}
+});
 router.post("/deletePost", verifyToken, async (req, res) => {
 	let data = req.body;
 	let response = await db.asyncQuery(`SELECT file_id, files.uuid FROM posts_files_mapping JOIN files ON files.id = posts_files_mapping.file_id WHERE post_id=${db.pool.escape(data.postId)}`, null);
@@ -86,6 +121,13 @@ router.get("/getAllPosts", verifyToken, async (req, res) => {
 		responseArray[i].files = JSON.stringify(await FileController.getFilesByPostId(responseArray[i].id));
 	}
 	res.send(responseArray);
+});
+router.get("/getPost/:postId", verifyToken, async (req, res) => {
+	let postId = req.params.postId;
+	let response = await db.asyncQuery(`SELECT * FROM posts WHERE id=${postId}`, null);
+	let responseJson = Object.values(JSON.parse(JSON.stringify(response)))[0];
+	responseJson.files = JSON.stringify(await FileController.getFilesByPostId(responseJson.id));
+	res.send(responseJson);
 });
 router.post("/getCenters", async (req, res) => {
 	let response = await db.asyncQuery(`SELECT * FROM center`, null);
