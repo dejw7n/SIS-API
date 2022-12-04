@@ -48,19 +48,20 @@ router.post("/verifyToken", (req, res) => {
 		res.status(401).send();
 	}
 });
-router.post("/getUser", verifyToken, (req, res) => {
-	const user = req.body;
+router.get("/getUser/:id", verifyToken, async (req, res) => {
+	const userId = req.params.id;
 
-	const sqlSelect = `SELECT id, name, lname, phone, email, r.roleID, r.role, c.center_id, c.name as centerName
+	const sqlSelect = `SELECT users.id, users.name, users.lname, users.phone, users.email, role.id as role_id, role.role, center.id as center_id, center.name as center_name
                      FROM users
-                            JOIN role r on users.role_id = r.role_id
-                            JOIN center c on c.center_id = users.center_id
-                     WHERE id = ${user.id}`;
+                            JOIN role on users.role_id = role.id
+                            JOIN center on center.id = users.center_id
+                     WHERE users.id = ${userId}`;
 	db.pool.query(sqlSelect, (err, result) => {
 		if (err) {
 			console.log("/getUser error:" + err);
 		}
-		res.send(result);
+		console.log(result);
+		res.send(result[0]);
 	});
 });
 router.post("/getMyData", verifyToken, (req, res) => {
@@ -81,12 +82,17 @@ router.post("/getMyData", verifyToken, (req, res) => {
 	} catch (err) {}
 });
 
+router.get("/getAllRoles", verifyToken, async (req, res) => {
+	let response = await db.asyncQuery(`SELECT * FROM role`, null);
+	res.send(response);
+});
+
 router.post("/getAllUsers", verifyToken, async (req, res) => {
-	const sqlSelect = `SELECT users.name, lname, phone, email, r.id, r.role, c.id, c.name as centerName
+	const sqlSelect = `SELECT users.id, users.name, users.lname, users.phone, users.email, role.id as role_id, role.role, center.id as center_id, center.name as center_name
     FROM users
-    JOIN role r on users.role_id = r.id
-    JOIN center c on c.id = users.center_id
-    ORDER BY lname`;
+    JOIN role on role.id = users.role_id
+    JOIN center on center.id = users.center_id
+    ORDER BY users.name`;
 	let response = await db.asyncQuery(sqlSelect, null);
 	res.status(200).send(response);
 });
@@ -109,10 +115,7 @@ router.post("/verifyUser", (req, ress) => {
 					//if (hash == resultArray[0].password) {
 					//FIXME: temporary solution without hashing
 					if (pass == resultArray[0].password) {
-						const sqlSelect = `SELECT users.id, users.name, users.lname, r.id as role_id, r.role
-                               FROM users
-                                      JOIN role r on users.role_id = r.id
-                               WHERE users.id = ${resultArray[0].id}`;
+						const sqlSelect = `SELECT id, name, lname, role_id, center_id FROM users WHERE users.id = ${resultArray[0].id}`;
 						db.pool.query(sqlSelect, (err, res) => {
 							if (err) {
 								console.log("/verifyUser error2:" + err);
@@ -140,6 +143,26 @@ router.post("/verifyUser", (req, ress) => {
 	} else {
 		ress.status(418).send("data not found");
 	}
+});
+
+router.post("/editUser", verifyToken, (req, res) => {
+	let userData = req.body;
+	console.log(req.body);
+	const sqlSelect = `UPDATE users SET 
+						name = '${userData.fnameInput}',
+						lname = '${userData.lnameInput}',
+						phone = '${userData.phoneInput}',
+						email = '${userData.emailInput}',
+						role_id = '${userData.roleInput}',
+						center_id = '${userData.centerInput}',
+						password = '${userData.passwordInput}'
+						WHERE id = ${userData.id}`;
+	db.pool.query(sqlSelect, (err, result) => {
+		if (err) {
+			console.log("/getMyData error" + err);
+		}
+		res.status(200).send(result);
+	});
 });
 
 /*empty*/
