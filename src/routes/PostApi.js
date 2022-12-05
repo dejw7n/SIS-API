@@ -70,13 +70,17 @@ router.post("/createPost", verifyToken, async (req, res) => {
 router.post("/editPost", verifyToken, async (req, res) => {
 	let data = req.body;
 	sql = `UPDATE posts SET 
-	title = ${db.pool.escape(data.titleInput)},
-	text = ${db.pool.escape(data.textInput)}, 
-	priority = ${db.pool.escape(data.priorityInput)}, 
-	center_id = ${db.pool.escape(data.centerInput)} 
-	WHERE id = ${data.id}`;
-	let response = await db.asyncQuery(sql, null);
+			title = ${db.pool.escape(data.titleInput)},
+			text = ${db.pool.escape(data.textInput)}, 
+			priority = ${db.pool.escape(data.priorityInput)}, 
+			center_id = ${db.pool.escape(data.centerInput)} 
+			WHERE id = ${data.id}`;
+	await db.asyncQuery(sql, null);
 	let postId = data.id;
+	let userId = data.userId;
+	//post changes
+	const sql2 = `INSERT INTO posts_changes(post_id, user_id) VALUES ('${postId}', ${userId})`;
+	await db.asyncQuery(sql2, null);
 	if (data.FilesDefer != "null") {
 		try {
 			let filesDeferJson = JSON.parse(data.FilesDefer);
@@ -118,7 +122,9 @@ router.get("/getAllPosts", verifyToken, async (req, res) => {
 	let response = await db.asyncQuery(`SELECT * FROM posts`, null);
 	let responseArray = Object.values(JSON.parse(JSON.stringify(response)));
 	for (let i = 0; i < responseArray.length; i++) {
-		responseArray[i].files = JSON.stringify(await FileController.getFilesByPostId(responseArray[i].id));
+		let postData = await getAdditionalPostData(responseArray[i].id);
+		responseArray[i].changes = postData.changes;
+		responseArray[i].files = postData.files;
 	}
 	res.send(responseArray);
 });
@@ -126,9 +132,18 @@ router.get("/getPost/:postId", verifyToken, async (req, res) => {
 	let postId = req.params.postId;
 	let response = await db.asyncQuery(`SELECT * FROM posts WHERE id=${postId}`, null);
 	let responseJson = Object.values(JSON.parse(JSON.stringify(response)))[0];
-	responseJson.files = JSON.stringify(await FileController.getFilesByPostId(responseJson.id));
+	let postData = await getAdditionalPostData(responseJson.id);
+	responseJson.changes = postData.changes;
+	responseJson.files = postData.files;
 	res.send(responseJson);
 });
+async function getAdditionalPostData(postId) {
+	let returnData = {};
+	let response = await db.asyncQuery(`SELECT * FROM posts_changes WHERE post_id=${postId} ORDER BY date DESC`);
+	returnData.changes = JSON.stringify(response);
+	returnData.files = JSON.stringify(await FileController.getFilesByPostId(postId));
+	return returnData;
+}
 router.post("/getCenters", async (req, res) => {
 	let response = await db.asyncQuery(`SELECT * FROM center`, null);
 	const result = Object.values(JSON.parse(JSON.stringify(response)));

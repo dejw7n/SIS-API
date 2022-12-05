@@ -60,7 +60,6 @@ router.get("/getUser/:id", verifyToken, async (req, res) => {
 		if (err) {
 			console.log("/getUser error:" + err);
 		}
-		console.log(result);
 		res.send(result[0]);
 	});
 });
@@ -145,10 +144,21 @@ router.post("/verifyUser", (req, ress) => {
 	}
 });
 
+router.post("/createUser", verifyToken, (req, res) => {
+	let userData = req.body;
+	const sqlSelect = `INSERT INTO users(name, lname, phone, email, role_id, center_id, password) VALUES ('${userData.fnameInput}','${userData.lnameInput}','${userData.phoneInput}','${userData.emailInput}','${userData.roleInput}','${userData.centerInput}','${userData.passwordInput}')`;
+	db.pool.query(sqlSelect, (err, result) => {
+		if (err) {
+			console.log("/getMyData error" + err);
+		}
+		res.status(200).send(result);
+	});
+});
 router.post("/editUser", verifyToken, (req, res) => {
 	let userData = req.body;
-	console.log(req.body);
-	const sqlSelect = `UPDATE users SET 
+	let sqlSelect = "";
+	if (req.body.passwordInput != null) {
+		sqlSelect = `UPDATE users SET 
 						name = '${userData.fnameInput}',
 						lname = '${userData.lnameInput}',
 						phone = '${userData.phoneInput}',
@@ -157,11 +167,31 @@ router.post("/editUser", verifyToken, (req, res) => {
 						center_id = '${userData.centerInput}',
 						password = '${userData.passwordInput}'
 						WHERE id = ${userData.id}`;
+	} else {
+		sqlSelect = `UPDATE users SET 
+						name = '${userData.fnameInput}',
+						lname = '${userData.lnameInput}',
+						phone = '${userData.phoneInput}',
+						email = '${userData.emailInput}',
+						role_id = '${userData.roleInput}',
+						center_id = '${userData.centerInput}'
+						WHERE id = ${userData.id}`;
+	}
 	db.pool.query(sqlSelect, (err, result) => {
 		if (err) {
 			console.log("/getMyData error" + err);
 		}
 		res.status(200).send(result);
+	});
+});
+router.post("/deleteUser", verifyToken, (req, res) => {
+	let userId = req.body.userId;
+	const sqlSelect = `DELETE FROM users WHERE id = ${userId}`;
+	db.pool.query(sqlSelect, (err, result) => {
+		if (err) {
+			console.log("/deleteUser error" + err);
+		}
+		res.status(200).send();
 	});
 });
 
