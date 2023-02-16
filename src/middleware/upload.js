@@ -1,17 +1,18 @@
 const util = require("util");
 const multer = require("multer");
 var fs = require("fs");
-var nconf = require("nconf");
 const crypto = require("crypto");
+const dotenv = require("dotenv");
+dotenv.config({ path: "./env" });
 
-const maxSize = nconf.file_size_limit;
+const maxSize = process.env.FILE_SIZE_LIMIT;
 
 let storage = multer.diskStorage({
 	destination: (req, file, cb) => {
 		let fileUuid = crypto.randomUUID();
 		global.selectedFilesUuid.push(fileUuid);
-		fs.mkdirSync(__basedir + nconf.get("file_base_dir") + "/" + fileUuid + "/");
-		cb(null, __basedir + nconf.get("file_base_dir") + "/" + fileUuid + "/");
+		fs.mkdirSync(__basedir + process.env.file_base_dir + "/" + fileUuid + "/");
+		cb(null, __basedir + process.env.file_base_dir + "/" + fileUuid + "/");
 	},
 	filename: (req, file, cb) => {
 		cb(null, file.originalname);

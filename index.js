@@ -1,3 +1,5 @@
+const dotenv = require("dotenv");
+dotenv.config({ path: "./env" });
 const express = require("express");
 const jwt = require("jsonwebtoken");
 const bodyParser = require("body-parser");
@@ -41,7 +43,7 @@ function verifyToken(req, res, next) {
 	next();
 }
 
-var listener = app.listen(30006, () => {
+var listener = app.listen(process.env.PORT, () => {
 	console.log("Cleaning up deferred files...");
 	FileController.cleanUpDeferredFiles();
 	console.log("Listening on port " + listener.address().port);

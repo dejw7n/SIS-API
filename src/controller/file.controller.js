@@ -2,18 +2,18 @@ const uploadFile = require("../middleware/upload");
 const fs = require("fs");
 var mime = require("mime-types");
 var path = require("path");
-var config = require("../middleware/config");
 var db = require("../db");
-var nconf = require("nconf");
+const dotenv = require("dotenv");
+dotenv.config({ path: "./env" });
 
 const getFileSizeLimit = (req, res) => {
 	res.status(200).send({
-		message: config.get("file_size_limit"),
+		message: process.env.FILE_SIZE_LIMIT,
 	});
 };
 
-const directoryPath = config.get("file_base_dir");
-const baseUrl = config.get("base_url");
+const directoryPath = process.env.file_base_dir;
+const baseUrl = process.env.base_url;
 
 global.numberFilesUploaded = 0;
 global.selectedFilesUuid = [];
@@ -39,7 +39,7 @@ const upload = async (req, res) => {
 		if (err.code == "LIMIT_FILE_SIZE") {
 			return res.status(500).send({
 				success: false,
-				message: "File size cannot be larger than " + nconf.get("file_size_limit") + " byte!",
+				message: "File size cannot be larger than " + process.env.file_size_limit + " byte!",
 			});
 		}
 
@@ -53,7 +53,11 @@ const getFileInfoById = async (req, res) => {
 	return res.status(200).send(respond[0]);
 };
 const getFileByDeferUuid = async (req, res) => {
-	let respond = await db.asyncQuery(`SELECT files.id, files.uuid, files.type, files.size, files.upload_date, files.name FROM files_deferred JOIN files ON files.id = files_deferred.file_id WHERE defer_uuid=${db.pool.escape(req.params.deferUuid)}`);
+	let respond = await db.asyncQuery(
+		`SELECT files.id, files.uuid, files.type, files.size, files.upload_date, files.name FROM files_deferred JOIN files ON files.id = files_deferred.file_id WHERE defer_uuid=${db.pool.escape(
+			req.params.deferUuid
+		)}`
+	);
 	let respond2 = db.asyncQuery(`DELETE FROM files_deferred WHERE defer_uuid = ${db.pool.escape(req.params.deferUuid)}`);
 	return res.status(200).send(respond[0]);
 };
@@ -101,7 +105,7 @@ async function cleanUpDeferredFiles() {
 	let response = await db.asyncQuery(`SELECT files.id, files.uuid FROM files_deferred INNER JOIN files ON files.id=files_deferred.file_id`);
 	response = JSON.parse(JSON.stringify(response));
 	response.forEach(async (element) => {
-		let dir = __basedir + nconf.get("file_base_dir") + "/" + element.uuid;
+		let dir = __basedir + process.env.file_base_dir + "/" + element.uuid;
 		fs.rm(dir, { recursive: true, force: true }, (err) => {
 			if (err) {
 				throw err;

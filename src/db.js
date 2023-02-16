@@ -1,10 +1,12 @@
 const mysql = require("mysql");
+const dotenv = require("dotenv");
+dotenv.config({ path: "./env" });
 
 const pool = mysql.createPool({
-	host: "91.224.90.56",
-	user: "u10_0mYakItBYz",
-	password: "8OsjAE.O4H^UKtEDDzlQDUc^",
-	database: "s10_spsul_sis",
+	host: process.env.DATABASE_HOST,
+	user: process.env.DATABASE_USER,
+	password: process.env.DATABASE_PASSWORD,
+	database: process.env.DATABASE_NAME,
 });
 
 function asyncQuery(query, params) {

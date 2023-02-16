@@ -1,5 +1,0 @@
-{
-    "base_url": "http://91.224.90.56:30006/",
-    "file_size_limit" : 104857600,
-    "file_base_dir": "/resources/static/assets/uploads/"
-}
