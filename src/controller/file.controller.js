@@ -13,7 +13,7 @@ const getFileSizeLimit = (req, res) => {
 };
 
 const directoryPath = process.env.file_base_dir;
-const baseUrl = process.env.base_url;
+const baseUrl = process.env.base_url + process.env.port;
 
 global.numberFilesUploaded = 0;
 global.selectedFilesUuid = [];
