@@ -5,6 +5,8 @@ const jwt = require("jsonwebtoken");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const app = express();
+const https = require("https");
+const fs = require("fs");
 const FileController = require("./src/controller/file.controller.js");
 
 const db = require("./src/db");
@@ -43,18 +45,30 @@ function verifyToken(req, res, next) {
 	next();
 }
 
-var listener = app.listen(process.env.PORT, () => {
-	console.log("Cleaning up deferred files...");
-	FileController.cleanUpDeferredFiles();
-	console.log("Listening on port " + listener.address().port);
-	db.pool.getConnection(function (err, connection) {
-		if (err === undefined) {
-			console.log("An error occurred while connecting to the database!");
-		} else {
-			console.log("Successfully connected to the database.");
-		}
-	});
-});
+const options = {
+	key: fs.readFileSync("/etc/letsencrypt/live/sis-api.spsul.cz/privkey.pem"),
+	cert: fs.readFileSync("/etc/letsencrypt/live/sis-api.spsul.cz/fullchain.pem"),
+};
+
+https
+	.createServer(options, (req, res) => {
+		res.writeHead(200);
+		res.end("Hello, World!");
+	})
+	.listen(443);
+
+// var listener = app.listen(process.env.PORT, () => {
+// 	console.log("Cleaning up deferred files...");
+// 	FileController.cleanUpDeferredFiles();
+// 	console.log("Listening on port " + listener.address().port);
+// 	db.pool.getConnection(function (err, connection) {
+// 		if (err === undefined) {
+// 			console.log("An error occurred while connecting to the database!");
+// 		} else {
+// 			console.log("Successfully connected to the database.");
+// 		}
+// 	});
+// });
 
 /*empty*/
 app.get("/", (req, res) => {
