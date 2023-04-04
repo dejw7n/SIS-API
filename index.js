@@ -8,6 +8,7 @@ const app = express();
 const https = require("https");
 const fs = require("fs");
 const FileController = require("./src/controller/file.controller.js");
+dotenv.config({ path: "./env" });
 
 const db = require("./src/db");
 
@@ -46,8 +47,8 @@ function verifyToken(req, res, next) {
 }
 
 const options = {
-	key: fs.readFileSync("/etc/letsencrypt/live/sis-api.spsul.cz/privkey.pem"),
-	cert: fs.readFileSync("/etc/letsencrypt/live/sis-api.spsul.cz/fullchain.pem"),
+	key: fs.readFileSync(process.env.SSL_PRIVKEY),
+	cert: fs.readFileSync(process.env.SSL_CERT),
 };
 
 https
