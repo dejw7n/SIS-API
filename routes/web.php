@@ -17,7 +17,24 @@ $router->get('/', function () use ($router) {
     return $router->app->version();
 });
 
+// Authorization
 $router->group(['prefix' => 'api'], function () use ($router) {
+    // No authentification required
+    $router->group(['prefix' => 'auth'], function () use ($router) {
+        $router->post('register', 'AuthController@register');
+        $router->post('login', 'AuthController@login');
+    });
+    // Authentification required
+    $router->group(['prefix' => 'auth', 'middleware' => 'auth'], function () use ($router) {
+        $router->get('me', 'AuthController@me');
+    });
+});
+
+// No authentification required
+$router->group(['prefix' => 'api'], function () use ($router) {});
+
+// Authentification required
+$router->group(['prefix' => 'api', 'middleware' => 'auth'], function () use ($router) {
     $router->group(['prefix' => 'file'], function () use ($router) {
         $router->get('', ['uses' => 'FileController@showAllFiles']);
         $router->get('{id}', ['uses' => 'FileController@showOneFile']);

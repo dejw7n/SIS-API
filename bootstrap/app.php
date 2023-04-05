@@ -19,7 +19,7 @@ date_default_timezone_set(env('APP_TIMEZONE', 'UTC'));
 
 $app = new Laravel\Lumen\Application(dirname(__DIR__));
 
-// $app->withFacades();
+$app->withFacades();
 
 $app->withEloquent();
 
@@ -66,12 +66,8 @@ $app->configure('app');
 //     App\Http\Middleware\ExampleMiddleware::class
 // ]);
 
-// $app->routeMiddleware([
-//     'auth' => App\Http\Middleware\Authenticate::class,
-// ]);
-
 $app->routeMiddleware([
-    'auth' => App\Http\Middleware\Auth0Middleware::class,
+    'auth' => App\Http\Middleware\Authenticate::class,
 ]);
 
 /*
@@ -85,9 +81,12 @@ $app->routeMiddleware([
 |
 */
 
-// $app->register(App\Providers\AppServiceProvider::class);
-// $app->register(App\Providers\AuthServiceProvider::class);
-// $app->register(App\Providers\EventServiceProvider::class);
+$app->register(App\Providers\AppServiceProvider::class);
+$app->register(App\Providers\AuthServiceProvider::class);
+$app->register(App\Providers\EventServiceProvider::class);
+
+$app->register(Tymon\JWTAuth\Providers\LumenServiceProvider::class);
+$app->register(Chuckrincon\LumenConfigDiscover\DiscoverServiceProvider::class);
 
 /*
 |--------------------------------------------------------------------------
