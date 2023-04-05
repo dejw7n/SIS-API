@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Laravel\Lumen\Auth\Authorizable;
 
-class User extends Model implements AuthenticatableContract, AuthorizableContract
+class MappingPostFile extends Model implements AuthenticatableContract, AuthorizableContract
 {
     use Authenticatable, Authorizable, HasFactory;
 
@@ -18,12 +18,12 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
      *
      * @var string[]
      */
-    protected $fillable = ['name', 'lname', 'email', 'phone', 'role_id', 'center_id'];
+    protected $fillable = ['post_id', 'file_id'];
 
     /**
      * The attributes excluded from the model's JSON form.
      *
      * @var string[]
      */
-    protected $hidden = ['password'];
+    protected $hidden = [];
 }
