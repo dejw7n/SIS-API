@@ -5,6 +5,10 @@ namespace App\Http\Controllers;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use App\Models\User;
+use App\Models\Role;
+use App\Models\UserToken;
+use Firebase\JWT\JWT;
+use Illuminate\Support\Facades\DB;
 
 class AuthController extends Controller
 {
@@ -72,6 +76,40 @@ class AuthController extends Controller
         if (!($token = Auth::attempt($credentials))) {
             return response()->json(['message' => 'Unauthorized'], 401);
         }
+
+        // get the authenticated user
+        $user = Auth::user();
+
+        // build the token payload
+        $payload = [
+            'iss' => $request->fullUrl(), # token issuer
+            'iat' => time(), # token issued at
+            'exp' => time() + config('auth.guards.api.exp'), # token expiration
+            'nbf' => time(), # token not before
+            'jti' => uniqid('', true), # token id
+            'sub' => $user->id, # token subject
+            #'prv' => hash('sha256', $user->email), # token provider
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'lname' => $user->lname,
+                'email' => $user->email,
+                'role' => Role::find($user->role_id)->role,
+                'center_id' => $user->center_id,
+            ],
+        ];
+
+        // create the token
+        //$token = JWT::encode($payload, env('JWT_SECRET'), 'HS256', null, $header);
+        $token = JWT::encode($payload, env('JWT_SECRET'), 'HS256');
+
+        // store the token into the db using model
+        $userToken = new UserToken();
+        $userToken->user_id = $user->id;
+        $userToken->token = $token;
+        $userToken->expires_at = DB::raw('FROM_UNIXTIME(' . $payload['exp'] . ')');
+        $userToken->save();
+
         return $this->respondWithToken($token);
     }
 
