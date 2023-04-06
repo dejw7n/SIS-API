@@ -9,13 +9,11 @@ class Controller extends BaseController
 {
     public function respondWithToken($token)
     {
-        $payload = Auth::payload();
-        $expirationTime = $payload->get('exp');
         return response()->json(
             [
                 'token' => $token,
                 'token_type' => 'bearer',
-                'expires_in' => $expirationTime,
+                'expires_in' => config('auth.guards.api.exp'),
             ],
             200,
         );
