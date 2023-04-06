@@ -23,13 +23,13 @@ class AuthController extends Controller
     {
         //validate incoming request
         $this->validate($request, [
-            'username' => 'required|string|unique:users',
+            'email' => 'required|string|unique:users',
             'password' => 'required|confirmed',
         ]);
 
         try {
             $user = new User();
-            $user->username = $request->input('username');
+            $user->email = $request->input('email');
             $user->password = app('hash')->make($request->input('password'));
             $user->save();
 
@@ -63,11 +63,11 @@ class AuthController extends Controller
     {
         //validate incoming request
         $this->validate($request, [
-            'username' => 'required|string',
+            'email' => 'required|string',
             'password' => 'required|string',
         ]);
 
-        $credentials = $request->only(['username', 'password']);
+        $credentials = $request->only(['email', 'password']);
 
         if (!($token = Auth::attempt($credentials))) {
             return response()->json(['message' => 'Unauthorized'], 401);

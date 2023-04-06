@@ -7,17 +7,6 @@ use Illuminate\Http\Request;
 
 class UserController extends Controller
 {
-    public function verifyCredentials()
-    {
-        $credentials = request(['email', 'password']);
-
-        if (!($token = auth()->attempt($credentials))) {
-            return response()->json(['error' => 'Unauthorized'], 401);
-        }
-
-        return $this->respondWithToken($token);
-    }
-
     public function showAllUsers()
     {
         return response()->json(User::all());
