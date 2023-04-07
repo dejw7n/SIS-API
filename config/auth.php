@@ -10,7 +10,7 @@ return [
         'api' => [
             'driver' => 'jwt',
             'provider' => 'users',
-            'exp' => 7776000,
+            'exp' => 15552000,
         ],
     ],
 

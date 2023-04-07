@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Post;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class PostController extends Controller
 {
@@ -19,6 +20,14 @@ class PostController extends Controller
 
     public function create(Request $request)
     {
+        $this->validate($request, [
+            'title' => 'required|string',
+            'content' => 'required|string',
+            'priority_id' => 'required|exists:priorities,id',
+            'center_id' => 'required|exists:centers,id',
+        ]);
+        $user = Auth::user();
+        $request->merge(['author_id' => $user->id]);
         $post = Post::create($request->all());
 
         return response()->json($post, 201);

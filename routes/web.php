@@ -35,6 +35,30 @@ $router->group(['prefix' => 'api'], function () use ($router) {});
 
 // Authentification required
 $router->group(['prefix' => 'api', 'middleware' => 'auth'], function () use ($router) {
+    $router->group(['prefix' => 'filePost'], function () use ($router) {
+        $router->get('/{id}', ['uses' => 'MappingPostFileController@showAllFilesOfPost']);
+    });
+    $router->group(['prefix' => 'role'], function () use ($router) {
+        $router->get('', ['uses' => 'RoleController@showAllRoles']);
+        $router->get('{id}', ['uses' => 'RoleController@showOneRole']);
+        $router->post('', ['uses' => 'RoleController@create']);
+        $router->delete('/{id}', ['uses' => 'RoleController@delete']);
+        $router->put('/{id}', ['uses' => 'RoleController@update']);
+    });
+    $router->group(['prefix' => 'center'], function () use ($router) {
+        $router->get('', ['uses' => 'CenterController@showAllCenters']);
+        $router->get('{id}', ['uses' => 'CenterController@showOneCenter']);
+        $router->post('', ['uses' => 'CenterController@create']);
+        $router->delete('/{id}', ['uses' => 'CenterController@delete']);
+        $router->put('/{id}', ['uses' => 'CenterController@update']);
+    });
+    $router->group(['prefix' => 'priority'], function () use ($router) {
+        $router->get('', ['uses' => 'PriorityController@showAllPriorities']);
+        $router->get('{id}', ['uses' => 'PriorityController@showOnePriority']);
+        $router->post('', ['uses' => 'PriorityController@create']);
+        $router->delete('/{id}', ['uses' => 'PriorityController@delete']);
+        $router->put('/{id}', ['uses' => 'PriorityController@update']);
+    });
     $router->group(['prefix' => 'file'], function () use ($router) {
         $router->get('', ['uses' => 'FileController@showAllFiles']);
         $router->get('{id}', ['uses' => 'FileController@showOneFile']);

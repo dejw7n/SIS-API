@@ -4,6 +4,8 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Contracts\Auth\Factory as Auth;
+use App\Models\UserToken;
+use Firebase\JWT\JWT;
 
 class Authenticate
 {
@@ -37,6 +39,12 @@ class Authenticate
     {
         if ($this->auth->guard($guard)->guest()) {
             return response('Unauthorized.', 401);
+        } else {
+            $token = explode(' ', $request->header('Authorization'))[1];
+            $userToken = UserToken::where('token', $token)->first();
+            if (!$userToken) {
+                return response('Unauthorized.', 401);
+            }
         }
 
         return $next($request);

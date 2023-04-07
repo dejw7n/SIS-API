@@ -14,16 +14,13 @@ class PrioritiesTableSeeder extends Seeder
     public function run(): void
     {
         Priority::create([
-            'priority' => '3',
-            'name' => 'Důležité',
+            'name' => 'Nedůležité',
         ]);
         Priority::create([
-            'priority' => '2',
             'name' => 'Upozornění',
         ]);
         Priority::create([
-            'priority' => '1',
-            'name' => 'Nedůležité',
+            'name' => 'Důležité',
         ]);
     }
 }
