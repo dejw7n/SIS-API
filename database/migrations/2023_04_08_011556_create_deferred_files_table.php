@@ -10,16 +10,13 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::create('posts', function (Blueprint $table) {
+        Schema::create('deferred_files', function (Blueprint $table) {
             $table->id();
-            $table->string('title');
-            $table->text('content');
-            $table->foreignId('priority_id')->constrained('priorities');
-            $table->foreignId('center_id')->constrained('centers');
+            $table->string('session');
             $table
-                ->foreignId('author_id')
-                ->constrained('users')
-                ->onDelete('set null');
+                ->foreignId('file_id')
+                ->constrained('files')
+                ->onDelete('cascade');
             $table->timestamps();
         });
     }
@@ -29,6 +26,6 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        Schema::dropIfExists('posts');
+        Schema::dropIfExists('deferred_files');
     }
 };

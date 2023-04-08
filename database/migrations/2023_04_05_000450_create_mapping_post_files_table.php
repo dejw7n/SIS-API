@@ -12,8 +12,14 @@ return new class extends Migration {
     {
         Schema::create('mapping_post_files', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('post_id')->constrained('posts');
-            $table->foreignId('file_id')->constrained('files');
+            $table
+                ->foreignId('post_id')
+                ->constrained('posts')
+                ->onDelete('cascade');
+            $table
+                ->foreignId('file_id')
+                ->constrained('files')
+                ->onDelete('cascade');
             $table->timestamps();
         });
     }

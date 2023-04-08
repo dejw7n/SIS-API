@@ -12,9 +12,7 @@ return new class extends Migration {
     {
         Schema::create('files', function (Blueprint $table) {
             $table->id();
-            $table->string('uuid');
             $table->string('name');
-            $table->string('type');
             $table->integer('size');
             $table->timestamps();
         });

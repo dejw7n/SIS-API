@@ -12,8 +12,14 @@ return new class extends Migration {
     {
         Schema::create('post_changes', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('post_id')->constrained('posts');
-            $table->foreignId('user_id')->constrained('users');
+            $table
+                ->foreignId('post_id')
+                ->constrained('posts')
+                ->onDelete('cascade');
+            $table
+                ->foreignId('user_id')
+                ->constrained('users')
+                ->onDelete('set null');
             $table->timestamps();
         });
     }

@@ -12,7 +12,10 @@ return new class extends Migration {
     {
         Schema::create('user_tokens', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained('users');
+            $table
+                ->foreignId('user_id')
+                ->constrained('users')
+                ->onDelete('cascade');
             $table->text('token');
             $table->timestamp('expires_at');
             $table->timestamps();
