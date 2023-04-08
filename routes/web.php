@@ -35,8 +35,11 @@ $router->group(['prefix' => 'api'], function () use ($router) {});
 
 // Authentification required
 $router->group(['prefix' => 'api', 'middleware' => 'auth'], function () use ($router) {
+    $router->group(['prefix' => 'upload'], function () use ($router) {
+        $router->post('', ['uses' => 'UploadController@upload']);
+    });
     $router->group(['prefix' => 'filePost'], function () use ($router) {
-        $router->get('/{id}', ['uses' => 'MappingPostFileController@showAllFilesOfPost']);
+        $router->get('/{id}', ['uses' => 'PostFileController@showAllFilesOfPost']);
     });
     $router->group(['prefix' => 'role'], function () use ($router) {
         $router->get('', ['uses' => 'RoleController@showAllRoles']);

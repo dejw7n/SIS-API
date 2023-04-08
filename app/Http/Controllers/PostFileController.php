@@ -2,31 +2,31 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\MappingPostFile;
+use App\Models\PostFile;
 use Illuminate\Http\Request;
 
-class MappingPostFileController extends Controller
+class PostFileController extends Controller
 {
     public function showAllPostFiles()
     {
-        return response()->json(MappingPostFile::all());
+        return response()->json(PostFile::all());
     }
 
     public function showAllFilesOfPost($id)
     {
-        return response()->json(MappingPostFile::find($id));
+        return response()->json(PostFile::find($id));
     }
 
     public function create(Request $request)
     {
-        $fie = MappingPostFile::create($request->all());
+        $fie = PostFile::create($request->all());
 
         return response()->json($file, 201);
     }
 
     public function update($id, Request $request)
     {
-        $file = MappingPostFile::findOrFail($id);
+        $file = PostFile::findOrFail($id);
         $file->update($request->all());
 
         return response()->json($file, 200);
@@ -34,7 +34,7 @@ class MappingPostFileController extends Controller
 
     public function delete($id)
     {
-        MappingPostFile::findOrFail($id)->delete();
+        PostFile::findOrFail($id)->delete();
         return response('Deleted Successfully', 200);
     }
 }
