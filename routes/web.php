@@ -35,12 +35,6 @@ $router->group(['prefix' => 'api'], function () use ($router) {});
 
 // Authentification required
 $router->group(['prefix' => 'api', 'middleware' => 'auth'], function () use ($router) {
-    $router->group(['prefix' => 'upload'], function () use ($router) {
-        $router->post('', ['uses' => 'UploadController@upload']);
-    });
-    $router->group(['prefix' => 'filePost'], function () use ($router) {
-        $router->get('/{id}', ['uses' => 'PostFileController@showAllFilesOfPost']);
-    });
     $router->group(['prefix' => 'role'], function () use ($router) {
         $router->get('', ['uses' => 'RoleController@showAllRoles']);
         $router->get('{id}', ['uses' => 'RoleController@showOneRole']);
@@ -68,9 +62,13 @@ $router->group(['prefix' => 'api', 'middleware' => 'auth'], function () use ($ro
         $router->post('', ['uses' => 'FileController@create']);
         $router->delete('/{id}', ['uses' => 'FileController@delete']);
         $router->put('/{id}', ['uses' => 'FileController@update']);
+        $router->post('/upload', ['uses' => 'FileController@upload']);
+        $router->get('/{id}/download', ['uses' => 'FileController@download']);
     });
     $router->group(['prefix' => 'post'], function () use ($router) {
         $router->get('', ['uses' => 'PostController@showAllPosts']);
+        $router->get('{id}/files', ['uses' => 'PostController@showAllFilesOfPost']);
+        $router->get('{id}/changes', ['uses' => 'PostController@showPostChanges']);
         $router->get('{id}', ['uses' => 'PostController@showOnePost']);
         $router->post('', ['uses' => 'PostController@create']);
         $router->delete('/{id}', ['uses' => 'PostController@delete']);

@@ -18,6 +18,7 @@ return new class extends Migration {
             $table->foreignId('center_id')->constrained('centers');
             $table
                 ->foreignId('author_id')
+                ->nullable()
                 ->constrained('users')
                 ->onDelete('set null');
             $table->timestamps();
