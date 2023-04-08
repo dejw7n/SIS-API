@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Laravel\Lumen\Auth\Authorizable;
 
-class File extends Model implements AuthenticatableContract, AuthorizableContract
+class DeferredFile extends Model implements AuthenticatableContract, AuthorizableContract
 {
     use Authenticatable, Authorizable, HasFactory;
 
@@ -18,7 +18,7 @@ class File extends Model implements AuthenticatableContract, AuthorizableContrac
      *
      * @var string[]
      */
-    protected $fillable = ['name', 'size', 'type'];
+    protected $fillable = ['session', 'file_id'];
 
     /**
      * The attributes excluded from the model's JSON form.
