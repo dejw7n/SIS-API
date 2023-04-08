@@ -19,5 +19,8 @@ class CentersTableSeeder extends Seeder
         Center::create([
             'name' => 'Stříbrníky',
         ]);
+        Center::create([
+            'name' => 'Resslova + Stříbrníky',
+        ]);
     }
 }
