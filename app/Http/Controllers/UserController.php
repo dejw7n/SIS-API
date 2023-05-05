@@ -29,14 +29,8 @@ class UserController extends Controller
             'email' => 'required|email|unique:users',
             'password' => 'required|string',
         ]);
-        $user = new User();
-        $user->name = $request->input('name');
-        $user->lname = $request->input('lname');
-        $user->phone = $request->input('phone');
-        $user->email = $request->input('email');
-        $user->role_id = $request->input('role_id');
-        $user->center_id = $request->input('center_id');
-        $user->password = Hash::make($request->input('password'));
+        $request->password = Hash::make($request->input('password'));
+        $user = User::create($request->all());
         $user->save();
 
         return response()->json($user, 201);
