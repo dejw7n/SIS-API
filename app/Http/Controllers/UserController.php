@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\UserToken;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
@@ -40,6 +41,8 @@ class UserController extends Controller
     {
         $user = User::findOrFail($id);
         $user->update($request->all());
+        //delete all sessions of user
+        UserToken::where('user_id', $id)->delete();
 
         return response()->json($user, 200);
     }
