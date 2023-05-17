@@ -21,6 +21,8 @@ return new class extends Migration {
                 ->nullable()
                 ->constrained('users')
                 ->onDelete('set null');
+            //bool
+            $table->boolean('monitors')->default(false);
             $table->timestamps();
         });
     }

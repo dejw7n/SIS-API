@@ -14,11 +14,12 @@ class PostsTableSeeder extends Seeder
     public function run(): void
     {
         Post::create([
-            'title' => 'První příspěvek',
+            'title' => 'První příspěvek + monitory',
             'content' => 'Zkušební příspěvek',
             'priority_id' => 1,
             'center_id' => 1,
             'author_id' => 1,
+            'monitors' => true,
         ]);
     }
 }

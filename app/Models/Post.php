@@ -18,7 +18,7 @@ class Post extends Model implements AuthenticatableContract, AuthorizableContrac
      *
      * @var string[]
      */
-    protected $fillable = ['title', 'content', 'priority_id', 'center_id', 'author_id'];
+    protected $fillable = ['title', 'content', 'priority_id', 'center_id', 'monitors', 'author_id'];
 
     /**
      * The attributes excluded from the model's JSON form.

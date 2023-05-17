@@ -51,6 +51,7 @@ class PostController extends Controller
             'content' => 'required|string',
             'priority_id' => 'required|exists:priorities,id',
             'center_id' => 'required|exists:centers,id',
+            'monitors' => 'required|boolean',
             'session_files' => 'string|nullable',
         ]);
         $user = Auth::user();
