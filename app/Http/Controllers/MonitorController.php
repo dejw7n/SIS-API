@@ -12,7 +12,9 @@ class MonitorController extends Controller
 {
     public function showPostsByCenter($center)
     {
-        $posts = Post::whereIn('center_id', [$center, 3])->where('monitors', true);
+        $posts = Post::all()
+            ->where('center_id', [$center, 3])
+            ->where('monitors', true);
         foreach ($posts as $post) {
             $post->author = User::find($post->author_id);
         }
