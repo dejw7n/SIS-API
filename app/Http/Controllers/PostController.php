@@ -16,7 +16,7 @@ class PostController extends Controller
     public function showAllPosts()
     {
         //sort by priority
-        $posts = Post::all()->orderBy('created_at', 'desc');
+        $posts = Post::all();
         foreach ($posts as $post) {
             $post_files = PostFile::where('post_id', $post->id)->get();
             $files = [];
