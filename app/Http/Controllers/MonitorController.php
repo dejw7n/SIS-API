@@ -14,6 +14,9 @@ class MonitorController extends Controller
         $posts = Post::all()
             ->where('center_id', $center)
             ->where('monitors', true);
+        foreach ($posts as $post) {
+            $post->user = User::find($post->author_id);
+        }
         return response()->json($posts);
     }
 
