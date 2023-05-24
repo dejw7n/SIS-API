@@ -10,13 +10,16 @@ use App\Models\User;
 use App\Models\PostChange;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use DB;
 
 class PostController extends Controller
 {
     public function showAllPosts()
     {
         //sort by priority
-        $posts = Post::all();
+        $posts = DB::table('posts')
+            ->orderBy('created_at', 'desc')
+            ->get();
         foreach ($posts as $post) {
             $post_files = PostFile::where('post_id', $post->id)->get();
             $files = [];

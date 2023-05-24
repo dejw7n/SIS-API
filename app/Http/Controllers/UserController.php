@@ -40,6 +40,10 @@ class UserController extends Controller
     public function update($id, Request $request)
     {
         $user = User::findOrFail($id);
+        return response()->json($request, 200);
+        if ($request->input('password') != '') {
+            $request->password = Hash::make($request->input('password'));
+        }
         $user->update($request->all());
         //delete all sessions of user
         UserToken::where('user_id', $id)->delete();
