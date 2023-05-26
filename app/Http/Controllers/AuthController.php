@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Role;
+use App\Models\Center;
 use App\Models\UserToken;
 use Firebase\JWT\JWT;
 use Illuminate\Support\Facades\DB;
@@ -94,8 +95,11 @@ class AuthController extends Controller
                 'name' => $user->name,
                 'lname' => $user->lname,
                 'email' => $user->email,
+                'phone' => $user->phone,
                 'role' => Role::find($user->role_id)->role,
                 'center_id' => $user->center_id,
+                'center' => Center::find($user->center_id)->name,
+                'created_at' => $user->created_at,
             ],
         ];
 
