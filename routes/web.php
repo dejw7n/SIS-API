@@ -40,6 +40,20 @@ $router->group(['prefix' => 'api', 'middleware' => 'auth'], function () use ($ro
         $router->delete('/{id}', ['uses' => 'RoleController@delete']);
         $router->put('/{id}', ['uses' => 'RoleController@update']);
     });
+    $router->group(['prefix' => 'issue'], function () use ($router) {
+        $router->get('', ['uses' => 'IssueController@showAllIssues']);
+        $router->get('{id}', ['uses' => 'IssueController@showOneIssue']);
+        $router->post('', ['uses' => 'IssueController@create']);
+        $router->delete('/{id}', ['uses' => 'IssueController@delete']);
+        $router->put('/{id}', ['uses' => 'IssueController@update']);
+    });
+    $router->group(['prefix' => 'project'], function () use ($router) {
+        $router->get('', ['uses' => 'ProjectController@showAllProjects']);
+        $router->get('{id}', ['uses' => 'ProjectController@showOneProject']);
+        $router->post('', ['uses' => 'ProjectController@create']);
+        $router->delete('/{id}', ['uses' => 'ProjectController@delete']);
+        $router->put('/{id}', ['uses' => 'ProjectController@update']);
+    });
     $router->group(['prefix' => 'center'], function () use ($router) {
         $router->get('', ['uses' => 'CenterController@showAllCenters']);
         $router->get('{id}', ['uses' => 'CenterController@showOneCenter']);
