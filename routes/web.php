@@ -54,6 +54,13 @@ $router->group(['prefix' => 'api', 'middleware' => 'auth'], function () use ($ro
         $router->delete('/{id}', ['uses' => 'ProjectController@delete']);
         $router->put('/{id}', ['uses' => 'ProjectController@update']);
     });
+    $router->group(['prefix' => 'idea'], function () use ($router) {
+        $router->get('', ['uses' => 'IdeaController@showAllIdeas']);
+        $router->get('{id}', ['uses' => 'IdeaController@showOneIdea']);
+        $router->post('', ['uses' => 'IdeaController@create']);
+        $router->delete('/{id}', ['uses' => 'IdeaController@delete']);
+        $router->put('/{id}', ['uses' => 'IdeaController@update']);
+    });
     $router->group(['prefix' => 'center'], function () use ($router) {
         $router->get('', ['uses' => 'CenterController@showAllCenters']);
         $router->get('{id}', ['uses' => 'CenterController@showOneCenter']);
