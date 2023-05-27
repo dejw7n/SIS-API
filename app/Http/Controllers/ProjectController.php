@@ -4,12 +4,20 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Project;
+use App\Models\User;
+use Illuminate\Support\Facades\DB;
 
 class ProjectController extends Controller
 {
     public function showAllProjects()
     {
-        return response()->json(Project::all());
+        $projects = DB::table('projects')
+            ->orderBy('created_at', 'desc')
+            ->get();
+        foreach ($projects as $project) {
+            $project->author = User::find($project->author_id);
+        }
+        return response()->json($projects);
     }
 
     public function showOneProject($id)
