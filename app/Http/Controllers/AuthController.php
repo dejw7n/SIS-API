@@ -9,6 +9,7 @@ use App\Models\Role;
 use App\Models\Center;
 use App\Models\UserToken;
 use Firebase\JWT\JWT;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 
 class AuthController extends Controller
@@ -72,11 +73,17 @@ class AuthController extends Controller
             'password' => 'required|string',
         ]);
 
-        $credentials = $request->only(['email', 'password']);
-
-        if (!($token = Auth::attempt($credentials))) {
+        $user2 = User::where('email', $request->input('email'))->first();
+        if ($user2->password !== $request->input('password')) {
             return response()->json(['message' => 'Unauthorized'], 401);
         }
+        //if (Hash::check($request->input('password'), $user2->password)) {
+        //return response()->json(['message' => 'Unauthorized'], 401);
+        //}
+        //$credentials = $request->only(['email', 'password']);
+        //if (!($token = Auth::attempt($credentials))) {
+        //    return response()->json(['message' => 'Unauthorized'], 401);
+        //}
 
         // get the authenticated user
         $user = Auth::user();
