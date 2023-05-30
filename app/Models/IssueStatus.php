@@ -18,7 +18,7 @@ class IssueStatus extends Model implements AuthenticatableContract, Authorizable
      *
      * @var string[]
      */
-    protected $fillable = ['name'];
+    protected $fillable = ['name', 'title'];
 
     /**
      * The attributes excluded from the model's JSON form.

@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use App\Models\IssuePriority;
 
 class IssuePrioritiesTableSeeder extends Seeder
 {
@@ -13,12 +14,14 @@ class IssuePrioritiesTableSeeder extends Seeder
     public function run(): void
     {
         IssuePriority::create([
-            'title' => 'První příspěvek + monitory',
-            'content' => 'Zkušební příspěvek',
-            'priority_id' => 1,
-            'center_id' => 1,
-            'author_id' => 1,
-            'monitors' => true,
+            'name' => 'unimportant',
+            'title' => 'Nespěchá to',
+            'value' => 1,
+        ]);
+        IssuePriority::create([
+            'name' => 'important',
+            'title' => 'Co nejdříve',
+            'value' => 2,
         ]);
     }
 }

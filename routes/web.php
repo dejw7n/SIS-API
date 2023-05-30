@@ -47,6 +47,12 @@ $router->group(['prefix' => 'api', 'middleware' => 'auth'], function () use ($ro
         $router->delete('/{id}', ['uses' => 'IssueController@delete']);
         $router->put('/{id}', ['uses' => 'IssueController@update']);
     });
+    $router->group(['prefix' => 'issueStatus'], function () use ($router) {
+        $router->get('', ['uses' => 'IssueController@showAllStatuses']);
+    });
+    $router->group(['prefix' => 'issuePriority'], function () use ($router) {
+        $router->get('', ['uses' => 'IssueController@showAllPriorities']);
+    });
     $router->group(['prefix' => 'project'], function () use ($router) {
         $router->get('', ['uses' => 'ProjectController@showAllProjects']);
         $router->get('{id}', ['uses' => 'ProjectController@showOneProject']);

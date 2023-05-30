@@ -18,7 +18,7 @@ class IssuePriority extends Model implements AuthenticatableContract, Authorizab
      *
      * @var string[]
      */
-    protected $fillable = ['name', 'priority_level'];
+    protected $fillable = ['name', 'title', 'value'];
 
     /**
      * The attributes excluded from the model's JSON form.

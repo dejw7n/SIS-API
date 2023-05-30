@@ -43,6 +43,6 @@ class ProjectController extends Controller
     public function delete($id)
     {
         Project::findOrFail($id)->delete();
-        return response('Deleted Successfully', 200);
+        return response('', 200);
     }
 }
