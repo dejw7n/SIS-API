@@ -73,8 +73,8 @@ class AuthController extends Controller
             'password' => 'required|string',
         ]);
 
-        $user2 = User::where('email', $request->input('email'))->first();
-        if ($user2->password !== $request->input('password')) {
+        $user = User::where('email', $request->input('email'))->first();
+        if ($user->password !== $request->input('password')) {
             return response()->json(['message' => 'Unauthorized'], 401);
         }
         //if (Hash::check($request->input('password'), $user2->password)) {
@@ -86,7 +86,7 @@ class AuthController extends Controller
         //}
 
         // get the authenticated user
-        $user = Auth::user();
+        //$user = Auth::user();
 
         // build the token payload
         $payload = [
