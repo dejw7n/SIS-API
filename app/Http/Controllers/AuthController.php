@@ -74,7 +74,9 @@ class AuthController extends Controller
         ]);
 
         $user = User::where('email', $request->input('email'))->first();
-        if ($user->password !== $request->input('password')) {
+        $reqPassword = $request->input('password');
+        $isPasswordMatch = Hash::check($reqPassword, $user->password);
+        if (!$isPasswordMatch) {
             return response()->json(['message' => 'Unauthorized'], 401);
         }
         //if (Hash::check($request->input('password'), $user2->password)) {

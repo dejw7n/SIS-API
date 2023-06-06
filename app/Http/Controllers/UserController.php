@@ -30,6 +30,9 @@ class UserController extends Controller
             'email' => 'required|email|unique:users',
             'password' => 'required|string',
         ]);
+        $password = $request->input('password');
+        $hashedPassword = Hash::make($password);
+        $user->password = $hashedPassword;
         $user = User::create($request->all());
         $user->save();
 
@@ -39,6 +42,12 @@ class UserController extends Controller
     public function update($id, Request $request)
     {
         $user = User::findOrFail($id);
+        $reqUser = $request->all();
+        if ($reqUser->password) {
+            $password = $reqUser->password;
+            $hashedPassword = Hash::make($password);
+            $reqUser->password = $hashedPassword;
+        }
         $user->update($request->all());
         //delete all sessions of user
         UserToken::where('user_id', $id)->delete();
