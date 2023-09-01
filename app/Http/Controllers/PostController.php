@@ -11,6 +11,8 @@ use App\Models\PostChange;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use DB;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\PostCreatedEmail;
 
 class PostController extends Controller
 {
@@ -70,6 +72,11 @@ class PostController extends Controller
                 $postFile->save();
                 $deferredFile->delete();
             }
+        }
+
+        $users = User::all();
+        foreach ($users as $user) {
+            Mail::to($user->email)->send(new PostCreatedEmail());
         }
 
         return response()->json($post, 201);
