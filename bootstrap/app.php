@@ -89,6 +89,8 @@ $app->register(App\Providers\EventServiceProvider::class);
 $app->register(Tymon\JWTAuth\Providers\LumenServiceProvider::class);
 $app->register(Chuckrincon\LumenConfigDiscover\DiscoverServiceProvider::class);
 
+$app->register(\Illuminate\Mail\MailServiceProvider::class);
+
 /*
 |--------------------------------------------------------------------------
 | Load The Application Routes
