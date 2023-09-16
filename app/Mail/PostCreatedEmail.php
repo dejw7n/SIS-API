@@ -10,9 +10,8 @@ class PostCreatedEmail extends Mailable
     {
         return $this->from('no-reply-sis@spsul.cz')
             ->subject('Nový příspěvek na ŠIS')
-            ->view('emails.my_email')
-            ->with([
-                'message' => 'Byl přidán nový příspěvek na šis.',
-            ]);
+            ->withSwiftMessage(function ($message) {
+                $message->setBody('Byl přidán nový příspěvek na šis.', 'text/plain');
+            });
     }
 }
