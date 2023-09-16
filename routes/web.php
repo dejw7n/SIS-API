@@ -26,6 +26,9 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->group(['prefix' => 'monitor'], function () use ($router) {
         $router->get('posts/{center}', ['uses' => 'MonitorController@showPostsByCenter']);
     });
+    $router->group(['prefix' => 'email'], function () use ($router) {
+        $router->get('', ['uses' => 'EmailController@sendTestEmail']);
+    });
 });
 
 // Authentification required

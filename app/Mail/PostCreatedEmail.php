@@ -8,7 +8,7 @@ class PostCreatedEmail extends Mailable
 {
     public function build()
     {
-        return $this->from('sender@example.com')
+        return $this->from('no-reply-sis@spsul.cz')
             ->subject('Nový příspěvek na ŠIS')
             ->view('emails.my_email')
             ->with([
